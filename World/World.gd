@@ -5,4 +5,3 @@ func _init():
 
 func _ready():
 	get_viewport().debug_draw = Viewport.DEBUG_DRAW_WIREFRAME
-	pass

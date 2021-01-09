@@ -4,12 +4,12 @@
 [ext_resource path="res://PlanetGenerator/terrain.material" type="Material" id=2]
 
 [sub_resource type="OpenSimplexNoise" id=1]
-seed = -1890508985
+seed = 1353875733
 period = 215.7
 persistence = 0.847
 lacunarity = 0.68
 
-[node name="LodPlanet" type="Spatial"]
+[node name="LodPlanet" type="RigidBody"]
 script = ExtResource( 1 )
 _max_depth = 2
 _resolution = 0
