@@ -10,11 +10,17 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "MeshInstance",
+"class": "PlanetFace",
+"language": "GDScript",
+"path": "res://LittlePlanet/PlanetFace.gd"
+}, {
+"base": "MeshInstance",
 "class": "TerrainFace",
 "language": "GDScript",
 "path": "res://PlanetGenerator/TerrainFace.gd"
 } ]
 _global_script_class_icons={
+"PlanetFace": "",
 "TerrainFace": ""
 }
 

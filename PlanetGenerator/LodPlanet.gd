@@ -9,7 +9,7 @@ export(bool) var update = false setget set_update
 export(float, 1, 1000) var _radius: float = 1
 export(int, 0, 8) var _max_depth: int
 export(int, 2, 32) var _resolution: int = 2
-export(int, 1, 100) var _base_lod_range: int = 1
+export(int, 1, 500) var _base_lod_range: int = 1
 export(OpenSimplexNoise) var _noise = null
 export(ShaderMaterial) var _material = null
 
@@ -137,10 +137,12 @@ func calculate_distance_to_player(pos_u: float, pos_v: float, face_normal: Vecto
 	var planet_translation := translation
 	
 	# calculate chunk center's local position (according to planet center)
-	var chunk_pos := Utils.to_unit_sphere(Vector3(pos_v, 1, pos_u)) * _radius
-	
-	# rotate the chunk's position according to the up_vec vector
+	var chunk_pos := Utils.to_unit_sphere(Vector3(pos_v, 1, pos_u))
 	chunk_pos = Utils.rotate_into_direction(chunk_pos, face_normal)
+	
+	# Add elevation from noise to the position.
+	var elevation = (_noise.get_noise_3dv(chunk_pos * _noise.period * _noise.octaves) + 1) * 0.5
+	chunk_pos = chunk_pos * _radius * (1 + elevation)
 	
 #	var chunk_pos := Vector3(pos_v, 1, pos_u).normalized() * _radius
 	# now add the planet's trnslation to get chunk's global position

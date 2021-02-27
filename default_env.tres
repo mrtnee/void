@@ -5,3 +5,12 @@
 [resource]
 background_mode = 2
 background_sky = SubResource( 1 )
+auto_exposure_scale = 0.6
+ss_reflections_fade_in = 0.270376
+ss_reflections_fade_out = 2.73208
+ss_reflections_depth_tolerance = 18.3
+dof_blur_far_amount = 0.07
+dof_blur_near_distance = 35.92
+adjustment_brightness = 1.81
+adjustment_contrast = 2.29
+adjustment_saturation = 5.2
