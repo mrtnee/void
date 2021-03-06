@@ -21,10 +21,12 @@ func _ready():
 	_initial_size = 2
 	create_planet_mesh()
 
+
 func create_planet_mesh():
 	for face_dir in _face_directions:
 		$Faces.add_child(PlanetFace.new(_radius, _resolution,
 			face_dir, _noise, _material, _initial_size))
+
 
 func set_update(_newVal):
 	remove_all_children($Faces)
@@ -37,3 +39,8 @@ func remove_all_children(node: Node = self):
 	for n in node.get_children():
 		node.remove_child(n)
 		n.queue_free()
+
+func transform_vertex(v: Vector3) -> Vector3:
+	v = Utils.to_unit_sphere(v)
+	var elevation = (_noise.get_noise_3dv(v * _noise.period * _noise.octaves) + 1) * 0.5
+	return v * _radius * (1 + 2*elevation)

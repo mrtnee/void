@@ -14,6 +14,7 @@ var _vert_spacing_v: Vector3
 var _size: float
 var _start_uv: Vector2
 
+
 func _init(radius, resolution, face_normal, noise, material, size):
 	_radius = radius
 	_resolution = resolution
@@ -28,8 +29,134 @@ func _init(radius, resolution, face_normal, noise, material, size):
 	
 	_start_uv = Vector2(0, 0)
 
+
 func _ready():
 	generate_face()
+
+
+func generate_face2():
+	var array_mesh := ArrayMesh.new()
+	var arr = []
+	arr.resize(Mesh.ARRAY_MAX)
+	
+	# Initialize arrays.
+	var verts := PoolVector3Array()
+	var verts2 := PoolVector3Array()
+	var normals := PoolVector3Array()
+	var indices := PoolIntArray()
+	var uvs := PoolVector2Array()
+	verts.resize(_resolution*_resolution)
+	verts2.resize(int(pow(_resolution + 2, 2)))
+	indices.resize(int(pow(_resolution - 1, 2)) * 2 * 3)
+	uvs.resize(_resolution*_resolution)
+	
+	# this is a vector containing vertex coordinates
+	var start_coords := _face_normal + _start_offset
+	
+	# Generate vertices and indices simultaneously
+	var indices_idx := 0
+	for y in range(-1, _resolution+1):
+		var vert_coords := start_coords - y * _vert_spacing_v
+		var uv := _start_uv + Vector2(0, -y * (_size / (_resolution - 1)))
+		
+		for x in range(-1, _resolution+1):
+			var vertex = transform_vertex(vert_coords + x * _vert_spacing_u)
+			var i := y * _resolution + x
+			
+			verts2[y*(_resolution+2)+x] = vertex
+			
+			if (x >= 0 and x < _resolution and y >= 0 and y < _resolution):
+				verts[i] = vertex
+				uvs[i] = uv
+				
+				if (x != _resolution - 1 && y != _resolution - 1):
+					indices[indices_idx] = i
+					indices[indices_idx+1] = i + 1
+					indices[indices_idx+2] = i + _resolution
+					indices[indices_idx+3] = i + 1
+					indices[indices_idx+4] = i + _resolution + 1
+					indices[indices_idx+5] = i + _resolution
+					indices_idx += 6
+				
+				# move the uv vector
+				uv.x += _size / (_resolution - 1)
+	
+	normals = calculate_normals(verts2)
+	
+	# Set normals.
+#	for i in range(0, indices.size(), 3):
+#		var vertexIdx1 = indices[i]
+#		var vertexIdx2 = indices[i+1]
+#		var vertexIdx3 = indices[i+2]
+#
+#		var v1 = verts[vertexIdx1]
+#		var v2 = verts[vertexIdx2]
+#		var v3 = verts[vertexIdx3]
+#
+#		# calculate normal for this face
+#		var norm: Vector3 = -(v2 - v1).normalized().cross((v3 - v1).normalized()).normalized()
+#		normals[vertexIdx1] = norm
+#		normals[vertexIdx2] = norm
+#		normals[vertexIdx3] = norm
+	
+	# Assign array to mesh array.
+	arr[Mesh.ARRAY_VERTEX] = verts
+	arr[Mesh.ARRAY_INDEX] = indices
+	arr[Mesh.ARRAY_TEX_UV] = uvs
+	arr[Mesh.ARRAY_NORMAL] = normals
+	
+	# Create mesh surface from mesh array and assign it to our MeshInstance's mesh.
+	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+#	array_mesh.regen_normalmaps()
+	self.mesh = array_mesh
+	self.mesh.surface_set_material(0, _material)
+#	self.create_trimesh_collision()
+	self.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_DOUBLE_SIDED
+
+
+func calculate_normals(verts: PoolVector3Array) -> PoolVector3Array:
+	var normals := PoolVector3Array()
+	normals.resize(_resolution*_resolution)
+	
+	# Calculate face normals.
+	var face_normals := PoolVector3Array()
+	face_normals.resize(2 * int(pow(_resolution + 1, 2)))
+	var j = 0
+	for y in range(0, _resolution + 1):
+		for x in range(0, _resolution + 1):
+			var i = y * (_resolution + 2) + x
+			
+			# Set first triangle's normal.
+			var v1 := verts[i]
+			var v2 := verts[i+1]
+			var v3 := verts[i+_resolution+2]
+			var norm: Vector3 = -(v1 - v2).normalized().cross((v1 - v3).normalized()).normalized()
+			face_normals[j] = norm
+			
+			# Set second triangle's normal.
+			v1 = verts[i+1]
+			v2 = verts[i+_resolution+3]
+			v3 = verts[i+_resolution+2]
+			norm = -(v1 - v2).normalized().cross((v1 - v3).normalized()).normalized()
+			face_normals[j+1] = norm
+			
+			j += 2
+	
+	# Calculate vertex normals.
+	j = 1
+	for i in range(len(normals)):
+		var normal := face_normals[j] #+ face_normals[j+1] + face_normals[j+2] \
+#			+ face_normals[j+2*_resolution+3] + face_normals[j+2*_resolution+4] \
+#			+ face_normals[j+2*_resolution+5]
+		normals[i] = normal.normalized()
+		
+		if (i % _resolution == _resolution - 1):
+			j += 4
+		else:
+			j += 2
+	
+	return normals
+
 
 func generate_face():
 	var array_mesh := ArrayMesh.new()
@@ -107,7 +234,9 @@ func generate_face():
 #	self.create_trimesh_collision()
 	self.cast_shadow = GeometryInstance.SHADOW_CASTING_SETTING_DOUBLE_SIDED
 
+
 func transform_vertex(v: Vector3) -> Vector3:
-	v = Utils.to_unit_sphere(v)
+#	v = Utils.to_unit_sphere(v)
+	v = v.normalized()
 	var elevation = (_noise.get_noise_3dv(v * _noise.period * _noise.octaves) + 1) * 0.5
 	return v * _radius * (1 + 2*elevation)
